@@ -610,6 +610,11 @@ button {
 }
 
 @media (max-width: 600px) {
+  .camera-feed {
+    object-fit: contain;
+    background: #08090c;
+  }
+
   .app::after {
     inset: 6px;
     border-radius: 20px;
@@ -761,6 +766,11 @@ button {
 }
 
 @media (max-height: 600px) and (orientation: landscape) {
+  .camera-feed {
+    object-fit: contain;
+    background: #08090c;
+  }
+
   .top-bar {
     gap: 8px;
     padding:
