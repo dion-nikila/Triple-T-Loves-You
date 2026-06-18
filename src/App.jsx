@@ -31,6 +31,20 @@ const DRAWING_START_DELAY = 220
 const MAX_DESKTOP_TUNGS = 220
 const MAX_COMPACT_TUNGS = 170
 
+function getCameraConstraints(stage) {
+  const width = stage?.clientWidth || window.innerWidth
+  const height = stage?.clientHeight || window.innerHeight
+  const isPortrait = height > width
+
+  return {
+    facingMode: { ideal: 'user' },
+    width: { ideal: isPortrait ? 720 : 1280 },
+    height: { ideal: isPortrait ? 1280 : 720 },
+    aspectRatio: { ideal: width / Math.max(height, 1) },
+    frameRate: { ideal: 30, max: 30 },
+  }
+}
+
 function styleDrawingContext(context) {
   context.lineCap = 'round'
   context.lineJoin = 'round'
@@ -481,7 +495,24 @@ export function App() {
         return
       }
 
-      const indexPoint = mapLandmarkToCover(landmarks[8], video, stage)
+      const videoFit = window.getComputedStyle(video).objectFit || 'cover'
+      const indexPoint = mapLandmarkToCover(
+        landmarks[8],
+        video,
+        stage,
+        videoFit,
+      )
+      if (!indexPoint.visible) {
+        endActivePath()
+        hideFingerCursor()
+        updateTrackingFeedback(
+          'ready',
+          drawingEnabledRef.current
+            ? 'Bring your fingertip into frame'
+            : 'Pinch to activate drawing',
+        )
+        return
+      }
       updateFingerCursor(indexPoint)
       const pinchRatio = getPinchDistanceRatio(landmarks)
       const gesture = classifyHandGesture(landmarks)
@@ -687,12 +718,7 @@ export function App() {
         prepareCanvas()
         localStream = await navigator.mediaDevices.getUserMedia({
           audio: false,
-          video: {
-            facingMode: 'user',
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30, max: 30 },
-          },
+          video: getCameraConstraints(stageRef.current),
         })
         if (disposed) {
           localStream.getTracks().forEach((trackItem) => trackItem.stop())
@@ -703,6 +729,7 @@ export function App() {
         const video = videoRef.current
         video.srcObject = localStream
         await video.play()
+        prepareCanvas()
         setStatus('Loading hand tracking…')
 
         const { FilesetResolver, HandLandmarker } = await import(
@@ -750,12 +777,20 @@ export function App() {
       }
     }
 
+    const videoElement = videoRef.current
+    const resizeObserver = new ResizeObserver(prepareCanvas)
+    if (stageRef.current) resizeObserver.observe(stageRef.current)
     window.addEventListener('resize', prepareCanvas)
+    window.visualViewport?.addEventListener('resize', prepareCanvas)
+    videoElement?.addEventListener('loadedmetadata', prepareCanvas)
     start()
 
     return () => {
       disposed = true
+      resizeObserver.disconnect()
       window.removeEventListener('resize', prepareCanvas)
+      window.visualViewport?.removeEventListener('resize', prepareCanvas)
+      videoElement?.removeEventListener('loadedmetadata', prepareCanvas)
       cancelAnimationFrame(animationFrameRef.current)
       window.clearTimeout(fadeTimerRef.current)
       localDetector?.close()
@@ -868,7 +903,9 @@ export function App() {
             <svg aria-hidden="true" viewBox="0 0 24 24">
               <path d="m4 20 3.8-.8L19 8l-3-3L4.8 16.2 4 20Zm9.8-12.8 3 3" />
             </svg>
-            {drawingEnabled ? 'Draw on' : 'Draw off'}
+            <span className="tool-button-label">
+              {drawingEnabled ? 'Draw on' : 'Draw off'}
+            </span>
           </button>
           <button
             className="tool-button"
@@ -879,7 +916,7 @@ export function App() {
             <svg aria-hidden="true" viewBox="0 0 24 24">
               <path d="m9 8-5 4 5 4m-4.5-4H14a6 6 0 0 1 6 6" />
             </svg>
-            Undo
+            <span className="tool-button-label">Undo</span>
           </button>
           <button
             className="tool-button"
@@ -890,7 +927,7 @@ export function App() {
             <svg aria-hidden="true" viewBox="0 0 24 24">
               <path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" />
             </svg>
-            Clear
+            <span className="tool-button-label">Clear</span>
           </button>
         </div>
       </header>
@@ -944,19 +981,23 @@ export function App() {
       <div className="instruction" aria-label="Gesture controls">
         <span className="instruction-spark" aria-hidden="true" />
         <span className="gesture-item">
-          <span className="gesture-key">PINCH</span> Draw on / off
+          <span className="gesture-key">PINCH</span>
+          <span className="gesture-action">Draw on / off</span>
         </span>
         <span className="instruction-divider" aria-hidden="true">·</span>
         <span className="gesture-item">
-          <span className="gesture-key">L SIGN</span> Undo
+          <span className="gesture-key">L SIGN</span>
+          <span className="gesture-action">Undo</span>
         </span>
         <span className="instruction-divider" aria-hidden="true">·</span>
         <span className="gesture-item">
-          <span className="gesture-key">PALM</span> Swipe to clear
+          <span className="gesture-key">PALM</span>
+          <span className="gesture-action">Swipe to clear</span>
         </span>
         <span className="instruction-divider" aria-hidden="true">·</span>
         <span className="gesture-item">
-          <span className="gesture-key">FIST</span> Summon
+          <span className="gesture-key">FIST</span>
+          <span className="gesture-action">Summon</span>
         </span>
       </div>
     </main>

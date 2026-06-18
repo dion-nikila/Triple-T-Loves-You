@@ -208,25 +208,41 @@ export function detectSwipeFromHistory(
   return strongestSwipe
 }
 
-export function mapLandmarkToCover(landmark, video, container) {
+export function mapLandmarkToCover(
+  landmark,
+  video,
+  container,
+  fit = 'cover',
+) {
   const containerWidth = container.clientWidth
   const containerHeight = container.clientHeight
   const videoWidth = video.videoWidth || containerWidth
   const videoHeight = video.videoHeight || containerHeight
-  const scale = Math.max(
+  const scaleCandidates = [
     containerWidth / videoWidth,
     containerHeight / videoHeight,
-  )
+  ]
+  const scale =
+    fit === 'contain'
+      ? Math.min(...scaleCandidates)
+      : Math.max(...scaleCandidates)
   const renderedWidth = videoWidth * scale
   const renderedHeight = videoHeight * scale
   const offsetX = (containerWidth - renderedWidth) / 2
   const offsetY = (containerHeight - renderedHeight) / 2
   const unmirroredX = landmark.x * renderedWidth + offsetX
+  const x = containerWidth - unmirroredX
+  const y = landmark.y * renderedHeight + offsetY
 
   return {
-    x: containerWidth - unmirroredX,
-    y: landmark.y * renderedHeight + offsetY,
-    nx: (containerWidth - unmirroredX) / containerWidth,
-    ny: (landmark.y * renderedHeight + offsetY) / containerHeight,
+    x,
+    y,
+    nx: x / containerWidth,
+    ny: y / containerHeight,
+    visible:
+      x >= 0 &&
+      x <= containerWidth &&
+      y >= 0 &&
+      y <= containerHeight,
   }
 }

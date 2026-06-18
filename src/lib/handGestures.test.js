@@ -9,6 +9,7 @@ import {
   isPeaceSign,
   isPinching,
   isUndoSign,
+  mapLandmarkToCover,
   smoothLandmarks,
 } from './handGestures.js'
 
@@ -113,4 +114,36 @@ test('adaptive smoothing responds faster to deliberate movement than jitter', ()
   const nearResponseRatio = nearResponse / (near[8].x - previous[8].x)
 
   assert.ok(farResponseRatio > nearResponseRatio)
+})
+
+test('maps mirrored landmarks to a portrait cover crop', () => {
+  const video = { videoWidth: 1280, videoHeight: 720 }
+  const container = { clientWidth: 390, clientHeight: 844 }
+
+  const center = mapLandmarkToCover({ x: 0.5, y: 0.5 }, video, container)
+  assert.equal(center.x, 195)
+  assert.equal(center.y, 422)
+  assert.equal(center.visible, true)
+
+  const croppedEdge = mapLandmarkToCover(
+    { x: 0.05, y: 0.5 },
+    video,
+    container,
+  )
+  assert.equal(croppedEdge.visible, false)
+})
+
+test('supports contained camera frames without distorting coordinates', () => {
+  const video = { videoWidth: 720, videoHeight: 1280 }
+  const container = { clientWidth: 390, clientHeight: 844 }
+  const point = mapLandmarkToCover(
+    { x: 0.25, y: 0.75 },
+    video,
+    container,
+    'contain',
+  )
+
+  assert.ok(Math.abs(point.x - 292.5) < 0.001)
+  assert.ok(Math.abs(point.y - 595.3333333333334) < 0.001)
+  assert.equal(point.visible, true)
 })
