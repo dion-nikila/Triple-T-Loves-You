@@ -1,4 +1,4 @@
-# Tung Gesture Canvas
+# Triple T Loves You
 
 A full-screen, gesture-controlled drawing toy built with React, Vite, and MediaPipe HandLandmarker.
 

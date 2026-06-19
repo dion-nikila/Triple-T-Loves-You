@@ -764,7 +764,7 @@ export function App() {
         animationFrameRef.current = requestAnimationFrame(track)
       } catch (caughtError) {
         if (disposed) return
-        console.error('[Tung canvas] startup failed', caughtError)
+        console.error('[Triple T Loves You] startup failed', caughtError)
         localDetector?.close()
         localStream?.getTracks().forEach((trackItem) => trackItem.stop())
         if (videoRef.current) videoRef.current.srcObject = null
@@ -902,9 +902,9 @@ export function App() {
       <TungSwarm tungs={tungs} />
 
       <header className="top-bar">
-        <div className="brand" aria-label="Tung Gesture Canvas">
+        <div className="brand" aria-label="Triple T Loves You">
           <span className="brand-mark" aria-hidden="true">TT</span>
-          <span>Tung canvas</span>
+          <span>Triple T Loves You</span>
         </div>
         <div className="toolbar" aria-label="Canvas controls">
           <button
