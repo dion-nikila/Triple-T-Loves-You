@@ -17,7 +17,8 @@ const HAND_MODEL =
   'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
 const MIN_POINT_DISTANCE = 4
 const MAX_POINT_JUMP = 110
-const SUMMON_HOLD_FRAMES = 8
+const SUMMON_HOLD_FRAMES = 10
+const FIST_CONFIRM_FRAMES = 3
 const UNDO_HOLD_FRAMES = 8
 const PINCH_HOLD_FRAMES = 3
 const PINCH_RELEASE_RATIO = 0.52
@@ -612,8 +613,27 @@ export function App() {
       undoLatchedRef.current = false
 
       if (gesture === 'fist') {
-        endActivePath()
+        const canSummon =
+          summonedRef.current ||
+          pathsRef.current.some((path) => path.length >= 2)
+
+        if (!canSummon) {
+          summonFramesRef.current = 0
+          updateTrackingFeedback(
+            drawingEnabledRef.current ? 'drawing' : 'ready',
+            drawingEnabledRef.current
+              ? 'Point your index finger to draw'
+              : 'Draw something before summoning',
+          )
+          return
+        }
+
         summonFramesRef.current += 1
+        if (summonFramesRef.current < FIST_CONFIRM_FRAMES) {
+          return
+        }
+
+        endActivePath()
         updateTrackingFeedback(
           summonedRef.current ? 'swarm' : 'summon',
           summonedRef.current
@@ -705,9 +725,9 @@ export function App() {
         },
         runningMode: 'VIDEO',
         numHands: 1,
-        minHandDetectionConfidence: 0.3,
-        minHandPresenceConfidence: 0.3,
-        minTrackingConfidence: 0.3,
+        minHandDetectionConfidence: 0.35,
+        minHandPresenceConfidence: 0.35,
+        minTrackingConfidence: 0.4,
       }
 
       try {

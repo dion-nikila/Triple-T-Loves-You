@@ -91,6 +91,14 @@ test('does not confuse a deliberate pointing hand with a fist', () => {
   assert.equal(classifyHandGesture(pointingHand), 'point')
 })
 
+test('does not classify a loose drawing hand as a fist', () => {
+  const drawingHand = makeHand(['index'])
+  drawingHand[8] = { x: 0.4, y: 0.38, z: 0 }
+
+  assert.equal(isClosedFist(drawingHand), false)
+  assert.equal(classifyHandGesture(drawingHand), 'point')
+})
+
 test('normalizes pinch distance by palm size', () => {
   const hand = makeHand(['index'])
   hand[4] = { ...hand[8], x: hand[8].x - 0.01 }

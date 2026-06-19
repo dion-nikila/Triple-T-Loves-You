@@ -63,8 +63,16 @@ export function isIndexPointing(landmarks) {
   const outerFolded = ['ring', 'pinky'].filter(
     (finger) => !isExtended(landmarks, finger),
   ).length
+  const palmScale = distance(landmarks[0], landmarks[9]) || 0.1
+  const indexReach =
+    distance(landmarks[8], getPalmCenter(landmarks)) / palmScale
 
-  return indexExtended && middleFolded && outerFolded >= 1
+  return (
+    indexExtended &&
+    middleFolded &&
+    outerFolded >= 1 &&
+    indexReach > 1.15
+  )
 }
 
 export function isIndexExtended(landmarks) {
@@ -79,20 +87,9 @@ export function isClosedFist(landmarks) {
 
   Object.entries(FINGER_JOINTS).forEach(([finger, joints]) => {
     const tipDistance = distance(landmarks[joints.tip], palmCenter) / palmScale
-    const pipAngle = jointAngle(
-      landmarks[joints.mcp],
-      landmarks[joints.pip],
-      landmarks[joints.dip],
-    )
-    const dipAngle = jointAngle(
-      landmarks[joints.pip],
-      landmarks[joints.dip],
-      landmarks[joints.tip],
-    )
-    const visiblyBent = Math.min(pipAngle, dipAngle) < 150
-    const tuckedIntoPalm = tipDistance < 1.25
+    const tuckedIntoPalm = tipDistance < 1.2
 
-    if (tuckedIntoPalm || (visiblyBent && tipDistance < 1.6)) {
+    if (tuckedIntoPalm) {
       curledFingers += 1
     }
     if (isExtended(landmarks, finger) && tipDistance > 1.55) {
@@ -100,7 +97,7 @@ export function isClosedFist(landmarks) {
     }
   })
 
-  return curledFingers >= 3 && stronglyExtendedFingers === 0
+  return curledFingers === 4 && stronglyExtendedFingers === 0
 }
 
 export function isOpenPalm(landmarks) {
@@ -146,8 +143,8 @@ export function classifyHandGesture(landmarks) {
   if (isPinching(landmarks)) return 'pinch'
   if (extendedCount >= 3) return 'palm'
   if (isUndoSign(landmarks)) return 'undo'
+  if (isIndexPointing(landmarks)) return 'point'
   if (isClosedFist(landmarks)) return 'fist'
-  if (index && !middle) return 'point'
   return 'neutral'
 }
 
