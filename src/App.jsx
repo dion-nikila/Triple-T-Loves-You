@@ -644,7 +644,7 @@ export function App() {
           summonedRef.current ? 'swarm' : 'summon',
           summonedRef.current
             ? 'Swipe to clear the swarm'
-            : 'Hold rock sign to summon',
+            : 'Hold 🤘 to summon',
           Math.min(summonFramesRef.current / SUMMON_HOLD_FRAMES, 1),
         )
         if (summonFramesRef.current >= SUMMON_HOLD_FRAMES) {
@@ -1038,7 +1038,13 @@ export function App() {
         </span>
         <span className="instruction-divider" aria-hidden="true">·</span>
         <span className="gesture-item">
-          <span className="gesture-key">ROCK</span>
+          <span
+            aria-label="Rock horns gesture"
+            className="gesture-key gesture-key--rock"
+          >
+            <span aria-hidden="true" className="gesture-emoji">🤘</span>
+            ROCK
+          </span>
           <span className="gesture-action">Summon</span>
         </span>
       </div>

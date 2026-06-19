@@ -526,6 +526,22 @@ button {
   line-height: 1;
 }
 
+.gesture-key--rock {
+  gap: 4px;
+  min-width: 68px;
+  border-color: rgba(201, 156, 255, 0.34);
+  color: #eadcff;
+  background: linear-gradient(135deg, rgba(201, 156, 255, 0.16), rgba(97, 255, 213, 0.08));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.06), 0 0 16px rgba(201, 156, 255, 0.08);
+}
+
+.gesture-emoji {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  filter: drop-shadow(0 0 5px rgba(201, 156, 255, 0.36));
+}
+
 .instruction-spark {
   width: 8px;
   height: 8px;
