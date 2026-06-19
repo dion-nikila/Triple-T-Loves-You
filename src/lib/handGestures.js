@@ -133,6 +133,19 @@ export function isUndoSign(landmarks) {
   )
 }
 
+export function isRockSign(landmarks) {
+  const palmScale = distance(landmarks[0], landmarks[9]) || 0.1
+  const outerSpread = distance(landmarks[8], landmarks[20]) / palmScale
+
+  return (
+    isExtended(landmarks, 'index') &&
+    !isExtended(landmarks, 'middle') &&
+    !isExtended(landmarks, 'ring') &&
+    isExtended(landmarks, 'pinky') &&
+    outerSpread > 0.65
+  )
+}
+
 export function classifyHandGesture(landmarks) {
   const index = isExtended(landmarks, 'index')
   const middle = isExtended(landmarks, 'middle')
@@ -143,13 +156,10 @@ export function classifyHandGesture(landmarks) {
   if (isPinching(landmarks)) return 'pinch'
   if (extendedCount >= 3) return 'palm'
   if (isUndoSign(landmarks)) return 'undo'
+  if (isRockSign(landmarks)) return 'rock'
   if (isIndexPointing(landmarks)) return 'point'
-  if (isClosedFist(landmarks)) return 'fist'
+  if (isClosedFist(landmarks)) return 'rest'
   return 'neutral'
-}
-
-export function shouldHandleFistGesture(gesture, drawingEnabled) {
-  return gesture === 'fist' && !drawingEnabled
 }
 
 export function smoothLandmarks(landmarks, previousLandmarks) {

@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL in desktop Chrome and allow camera access. Pinch your thumb and index finger together once to activate drawing, then move your index fingertip to draw. Pinch again to pause. Hold a closed fist to transform the drawing into a swarm. Use **Clear** to reset.
+Open the local URL in desktop Chrome and allow camera access. Pinch your thumb and index finger together once to activate drawing, then move your index fingertip to draw. Pinch again to pause. Hold a rock-horns sign (index and pinky raised) to transform the drawing into a swarm. Use **Clear** to reset.
 
 Gesture controls:
 
@@ -17,7 +17,7 @@ Gesture controls:
 - Move your index fingertip while drawing is active: draw continuously
 - L sign (index finger and thumb extended) held briefly: undo the last stroke
 - Open palm swiped sideways: clear the canvas or swarm (motion remains tracked through brief pose dropouts)
-- Closed fist held briefly while drawing is paused: summon the Tung swarm
+- Rock-horns sign held briefly (index and pinky raised): summon the Tung swarm
 
 Keyboard fallbacks are `D` for drawing on/off, `Cmd/Ctrl + Z` for undo, and `C` to clear.
 

@@ -8,9 +8,9 @@ import {
   isOpenPalm,
   isPeaceSign,
   isPinching,
+  isRockSign,
   isUndoSign,
   mapLandmarkToCover,
-  shouldHandleFistGesture,
   smoothLandmarks,
 } from './handGestures.js'
 
@@ -57,7 +57,7 @@ test('recognizes the core hand poses without requiring a perfect orientation', (
 })
 
 test('classifies gestures exclusively so actions cannot compete', () => {
-  assert.equal(classifyHandGesture(makeHand()), 'fist')
+  assert.equal(classifyHandGesture(makeHand()), 'rest')
   assert.equal(classifyHandGesture(makeHand(['index'])), 'point')
   assert.equal(
     classifyHandGesture(makeHand(['index', 'middle', 'ring', 'pinky'])),
@@ -82,7 +82,7 @@ test('recognizes a fist despite noisy straight-looking knuckles', () => {
 
   assert.equal(isIndexExtended(noisyFist), true)
   assert.equal(isClosedFist(noisyFist), true)
-  assert.equal(classifyHandGesture(noisyFist), 'fist')
+  assert.equal(classifyHandGesture(noisyFist), 'rest')
 })
 
 test('does not confuse a deliberate pointing hand with a fist', () => {
@@ -100,10 +100,12 @@ test('does not classify a loose drawing hand as a fist', () => {
   assert.equal(classifyHandGesture(drawingHand), 'point')
 })
 
-test('never handles a fist action while drawing mode is active', () => {
-  assert.equal(shouldHandleFistGesture('fist', true), false)
-  assert.equal(shouldHandleFistGesture('fist', false), true)
-  assert.equal(shouldHandleFistGesture('point', false), false)
+test('recognizes a deliberate rock sign for summoning', () => {
+  const rockSign = makeHand(['index', 'pinky'])
+
+  assert.equal(isRockSign(rockSign), true)
+  assert.equal(classifyHandGesture(rockSign), 'rock')
+  assert.equal(isRockSign(makeHand(['index'])), false)
 })
 
 test('normalizes pinch distance by palm size', () => {

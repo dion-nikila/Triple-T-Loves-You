@@ -6,7 +6,6 @@ import {
   getPinchDistanceRatio,
   getPalmCenter,
   mapLandmarkToCover,
-  shouldHandleFistGesture,
   smoothLandmarks,
 } from './lib/handGestures.js'
 
@@ -18,8 +17,8 @@ const HAND_MODEL =
   'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
 const MIN_POINT_DISTANCE = 4
 const MAX_POINT_JUMP = 110
-const SUMMON_HOLD_FRAMES = 10
-const FIST_CONFIRM_FRAMES = 3
+const SUMMON_HOLD_FRAMES = 7
+const SUMMON_CONFIRM_FRAMES = 2
 const UNDO_HOLD_FRAMES = 8
 const PINCH_HOLD_FRAMES = 3
 const PINCH_RELEASE_RATIO = 0.52
@@ -613,15 +612,13 @@ export function App() {
       undoFramesRef.current = 0
       undoLatchedRef.current = false
 
-      if (
-        gesture === 'fist' &&
-        !shouldHandleFistGesture(gesture, drawingEnabledRef.current)
-      ) {
+      if (gesture === 'rest') {
+        endActivePath()
         summonFramesRef.current = 0
         return
       }
 
-      if (shouldHandleFistGesture(gesture, drawingEnabledRef.current)) {
+      if (gesture === 'rock') {
         const canSummon =
           summonedRef.current ||
           pathsRef.current.some((path) => path.length >= 2)
@@ -638,7 +635,7 @@ export function App() {
         }
 
         summonFramesRef.current += 1
-        if (summonFramesRef.current < FIST_CONFIRM_FRAMES) {
+        if (summonFramesRef.current < SUMMON_CONFIRM_FRAMES) {
           return
         }
 
@@ -647,7 +644,7 @@ export function App() {
           summonedRef.current ? 'swarm' : 'summon',
           summonedRef.current
             ? 'Swipe to clear the swarm'
-            : 'Hold fist to summon',
+            : 'Hold rock sign to summon',
           Math.min(summonFramesRef.current / SUMMON_HOLD_FRAMES, 1),
         )
         if (summonFramesRef.current >= SUMMON_HOLD_FRAMES) {
@@ -1041,8 +1038,8 @@ export function App() {
         </span>
         <span className="instruction-divider" aria-hidden="true">·</span>
         <span className="gesture-item">
-          <span className="gesture-key">FIST</span>
-          <span className="gesture-action">Pause + summon</span>
+          <span className="gesture-key">ROCK</span>
+          <span className="gesture-action">Summon</span>
         </span>
       </div>
     </main>
