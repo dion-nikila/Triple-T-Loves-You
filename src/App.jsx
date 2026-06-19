@@ -6,6 +6,7 @@ import {
   getPinchDistanceRatio,
   getPalmCenter,
   mapLandmarkToCover,
+  shouldHandleFistGesture,
   smoothLandmarks,
 } from './lib/handGestures.js'
 
@@ -612,7 +613,15 @@ export function App() {
       undoFramesRef.current = 0
       undoLatchedRef.current = false
 
-      if (gesture === 'fist') {
+      if (
+        gesture === 'fist' &&
+        !shouldHandleFistGesture(gesture, drawingEnabledRef.current)
+      ) {
+        summonFramesRef.current = 0
+        return
+      }
+
+      if (shouldHandleFistGesture(gesture, drawingEnabledRef.current)) {
         const canSummon =
           summonedRef.current ||
           pathsRef.current.some((path) => path.length >= 2)
@@ -1033,7 +1042,7 @@ export function App() {
         <span className="instruction-divider" aria-hidden="true">·</span>
         <span className="gesture-item">
           <span className="gesture-key">FIST</span>
-          <span className="gesture-action">Summon</span>
+          <span className="gesture-action">Pause + summon</span>
         </span>
       </div>
     </main>

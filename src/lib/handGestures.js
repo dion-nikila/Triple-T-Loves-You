@@ -148,6 +148,10 @@ export function classifyHandGesture(landmarks) {
   return 'neutral'
 }
 
+export function shouldHandleFistGesture(gesture, drawingEnabled) {
+  return gesture === 'fist' && !drawingEnabled
+}
+
 export function smoothLandmarks(landmarks, previousLandmarks) {
   if (!previousLandmarks?.length) {
     return landmarks.map((landmark) => ({ ...landmark }))

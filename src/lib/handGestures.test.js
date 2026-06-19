@@ -10,6 +10,7 @@ import {
   isPinching,
   isUndoSign,
   mapLandmarkToCover,
+  shouldHandleFistGesture,
   smoothLandmarks,
 } from './handGestures.js'
 
@@ -97,6 +98,12 @@ test('does not classify a loose drawing hand as a fist', () => {
 
   assert.equal(isClosedFist(drawingHand), false)
   assert.equal(classifyHandGesture(drawingHand), 'point')
+})
+
+test('never handles a fist action while drawing mode is active', () => {
+  assert.equal(shouldHandleFistGesture('fist', true), false)
+  assert.equal(shouldHandleFistGesture('fist', false), true)
+  assert.equal(shouldHandleFistGesture('point', false), false)
 })
 
 test('normalizes pinch distance by palm size', () => {

@@ -17,7 +17,7 @@ Gesture controls:
 - Move your index fingertip while drawing is active: draw continuously
 - L sign (index finger and thumb extended) held briefly: undo the last stroke
 - Open palm swiped sideways: clear the canvas or swarm (motion remains tracked through brief pose dropouts)
-- Closed fist held briefly: summon the Tung swarm
+- Closed fist held briefly while drawing is paused: summon the Tung swarm
 
 Keyboard fallbacks are `D` for drawing on/off, `Cmd/Ctrl + Z` for undo, and `C` to clear.
 
