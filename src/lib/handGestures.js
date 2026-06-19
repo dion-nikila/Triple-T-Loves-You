@@ -72,9 +72,35 @@ export function isIndexExtended(landmarks) {
 }
 
 export function isClosedFist(landmarks) {
-  return ['index', 'middle', 'ring', 'pinky'].every(
-    (finger) => !isExtended(landmarks, finger),
-  )
+  const palmCenter = getPalmCenter(landmarks)
+  const palmScale = distance(landmarks[0], landmarks[9]) || 0.1
+  let curledFingers = 0
+  let stronglyExtendedFingers = 0
+
+  Object.entries(FINGER_JOINTS).forEach(([finger, joints]) => {
+    const tipDistance = distance(landmarks[joints.tip], palmCenter) / palmScale
+    const pipAngle = jointAngle(
+      landmarks[joints.mcp],
+      landmarks[joints.pip],
+      landmarks[joints.dip],
+    )
+    const dipAngle = jointAngle(
+      landmarks[joints.pip],
+      landmarks[joints.dip],
+      landmarks[joints.tip],
+    )
+    const visiblyBent = Math.min(pipAngle, dipAngle) < 150
+    const tuckedIntoPalm = tipDistance < 1.25
+
+    if (tuckedIntoPalm || (visiblyBent && tipDistance < 1.6)) {
+      curledFingers += 1
+    }
+    if (isExtended(landmarks, finger) && tipDistance > 1.55) {
+      stronglyExtendedFingers += 1
+    }
+  })
+
+  return curledFingers >= 3 && stronglyExtendedFingers === 0
 }
 
 export function isOpenPalm(landmarks) {
@@ -120,7 +146,7 @@ export function classifyHandGesture(landmarks) {
   if (isPinching(landmarks)) return 'pinch'
   if (extendedCount >= 3) return 'palm'
   if (isUndoSign(landmarks)) return 'undo'
-  if (extendedCount === 0) return 'fist'
+  if (isClosedFist(landmarks)) return 'fist'
   if (index && !middle) return 'point'
   return 'neutral'
 }
@@ -214,13 +240,23 @@ export function mapLandmarkToCover(
   container,
   fit = 'cover',
 ) {
-  const containerWidth = container.clientWidth
-  const containerHeight = container.clientHeight
+  const containerRect = container.getBoundingClientRect?.()
+  const videoRect = video.getBoundingClientRect?.()
+  const containerWidth = containerRect?.width || container.clientWidth
+  const containerHeight = containerRect?.height || container.clientHeight
+  const displayWidth = videoRect?.width || video.clientWidth || containerWidth
+  const displayHeight = videoRect?.height || video.clientHeight || containerHeight
+  const displayLeft = videoRect
+    ? videoRect.left - (containerRect?.left || 0)
+    : video.offsetLeft || 0
+  const displayTop = videoRect
+    ? videoRect.top - (containerRect?.top || 0)
+    : video.offsetTop || 0
   const videoWidth = video.videoWidth || containerWidth
   const videoHeight = video.videoHeight || containerHeight
   const scaleCandidates = [
-    containerWidth / videoWidth,
-    containerHeight / videoHeight,
+    displayWidth / videoWidth,
+    displayHeight / videoHeight,
   ]
   const scale =
     fit === 'contain'
@@ -228,11 +264,11 @@ export function mapLandmarkToCover(
       : Math.max(...scaleCandidates)
   const renderedWidth = videoWidth * scale
   const renderedHeight = videoHeight * scale
-  const offsetX = (containerWidth - renderedWidth) / 2
-  const offsetY = (containerHeight - renderedHeight) / 2
+  const offsetX = (displayWidth - renderedWidth) / 2
+  const offsetY = (displayHeight - renderedHeight) / 2
   const unmirroredX = landmark.x * renderedWidth + offsetX
-  const x = containerWidth - unmirroredX
-  const y = landmark.y * renderedHeight + offsetY
+  const x = displayLeft + displayWidth - unmirroredX
+  const y = displayTop + landmark.y * renderedHeight + offsetY
 
   return {
     x,
@@ -240,9 +276,9 @@ export function mapLandmarkToCover(
     nx: x / containerWidth,
     ny: y / containerHeight,
     visible:
-      x >= 0 &&
-      x <= containerWidth &&
-      y >= 0 &&
-      y <= containerHeight,
+      x >= displayLeft &&
+      x <= displayLeft + displayWidth &&
+      y >= displayTop &&
+      y <= displayTop + displayHeight,
   }
 }

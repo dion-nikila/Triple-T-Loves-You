@@ -17,7 +17,7 @@ const HAND_MODEL =
   'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
 const MIN_POINT_DISTANCE = 4
 const MAX_POINT_JUMP = 110
-const SUMMON_HOLD_FRAMES = 12
+const SUMMON_HOLD_FRAMES = 8
 const UNDO_HOLD_FRAMES = 8
 const PINCH_HOLD_FRAMES = 3
 const PINCH_RELEASE_RATIO = 0.52
@@ -29,19 +29,20 @@ const LANDMARK_RESET_DELAY = 250
 const INDEX_TRACKING_GRACE = 240
 const DRAWING_START_DELAY = 220
 const MAX_DESKTOP_TUNGS = 220
-const MAX_COMPACT_TUNGS = 170
+const MAX_COMPACT_TUNGS = 120
 
 function getCameraConstraints(stage) {
   const width = stage?.clientWidth || window.innerWidth
   const height = stage?.clientHeight || window.innerHeight
   const isPortrait = height > width
+  const isCompact = Math.min(width, height) <= 600
 
   return {
     facingMode: { ideal: 'user' },
-    width: { ideal: isPortrait ? 720 : 1280 },
-    height: { ideal: isPortrait ? 1280 : 720 },
-    aspectRatio: { ideal: width / Math.max(height, 1) },
-    frameRate: { ideal: 30, max: 30 },
+    width: { ideal: isPortrait ? 480 : isCompact ? 640 : 1280 },
+    height: { ideal: isPortrait ? 640 : isCompact ? 480 : 720 },
+    aspectRatio: { ideal: isPortrait ? 3 / 4 : isCompact ? 4 / 3 : 16 / 9 },
+    frameRate: { ideal: isCompact ? 24 : 30, max: 30 },
   }
 }
 
@@ -305,7 +306,11 @@ export function App() {
 
       const width = stage.clientWidth
       const height = stage.clientHeight
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
+      const compactCanvas = Math.min(width, height) <= 600
+      const pixelRatio = Math.min(
+        window.devicePixelRatio || 1,
+        compactCanvas ? 1.5 : 2,
+      )
       canvas.width = Math.round(width * pixelRatio)
       canvas.height = Math.round(height * pixelRatio)
 
@@ -319,6 +324,15 @@ export function App() {
           drawPath(context, path, width, height),
         )
       }
+    }
+
+    const syncVideoGeometry = () => {
+      const video = videoRef.current
+      if (video?.videoWidth && video?.videoHeight) {
+        video.dataset.streamOrientation =
+          video.videoHeight >= video.videoWidth ? 'portrait' : 'landscape'
+      }
+      prepareCanvas()
     }
 
     const endActivePath = () => {
@@ -614,7 +628,7 @@ export function App() {
         return
       }
 
-      summonFramesRef.current = 0
+      summonFramesRef.current = Math.max(0, summonFramesRef.current - 1)
       const now = performance.now()
       if (gesture === 'point') {
         lastIndexExtendedAtRef.current = now
@@ -691,9 +705,9 @@ export function App() {
         },
         runningMode: 'VIDEO',
         numHands: 1,
-        minHandDetectionConfidence: 0.38,
-        minHandPresenceConfidence: 0.35,
-        minTrackingConfidence: 0.35,
+        minHandDetectionConfidence: 0.3,
+        minHandPresenceConfidence: 0.3,
+        minTrackingConfidence: 0.3,
       }
 
       try {
@@ -729,7 +743,7 @@ export function App() {
         const video = videoRef.current
         video.srcObject = localStream
         await video.play()
-        prepareCanvas()
+        syncVideoGeometry()
         setStatus('Loading hand tracking…')
 
         const { FilesetResolver, HandLandmarker } = await import(
@@ -782,7 +796,8 @@ export function App() {
     if (stageRef.current) resizeObserver.observe(stageRef.current)
     window.addEventListener('resize', prepareCanvas)
     window.visualViewport?.addEventListener('resize', prepareCanvas)
-    videoElement?.addEventListener('loadedmetadata', prepareCanvas)
+    videoElement?.addEventListener('loadedmetadata', syncVideoGeometry)
+    videoElement?.addEventListener('resize', syncVideoGeometry)
     start()
 
     return () => {
@@ -790,7 +805,8 @@ export function App() {
       resizeObserver.disconnect()
       window.removeEventListener('resize', prepareCanvas)
       window.visualViewport?.removeEventListener('resize', prepareCanvas)
-      videoElement?.removeEventListener('loadedmetadata', prepareCanvas)
+      videoElement?.removeEventListener('loadedmetadata', syncVideoGeometry)
+      videoElement?.removeEventListener('resize', syncVideoGeometry)
       cancelAnimationFrame(animationFrameRef.current)
       window.clearTimeout(fadeTimerRef.current)
       localDetector?.close()

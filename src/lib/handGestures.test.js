@@ -73,6 +73,24 @@ test('classifies gestures exclusively so actions cannot compete', () => {
   assert.equal(classifyHandGesture(pinch), 'pinch')
 })
 
+test('recognizes a fist despite noisy straight-looking knuckles', () => {
+  const noisyFist = makeHand()
+  noisyFist[6] = { x: 0.45, y: 0.62, z: 0 }
+  noisyFist[7] = { x: 0.5, y: 0.59, z: 0 }
+  noisyFist[8] = { x: 0.55, y: 0.56, z: 0 }
+
+  assert.equal(isIndexExtended(noisyFist), true)
+  assert.equal(isClosedFist(noisyFist), true)
+  assert.equal(classifyHandGesture(noisyFist), 'fist')
+})
+
+test('does not confuse a deliberate pointing hand with a fist', () => {
+  const pointingHand = makeHand(['index'])
+
+  assert.equal(isClosedFist(pointingHand), false)
+  assert.equal(classifyHandGesture(pointingHand), 'point')
+})
+
 test('normalizes pinch distance by palm size', () => {
   const hand = makeHand(['index'])
   hand[4] = { ...hand[8], x: hand[8].x - 0.01 }
@@ -146,4 +164,39 @@ test('supports contained camera frames without distorting coordinates', () => {
   assert.ok(Math.abs(point.x - 292.5) < 0.001)
   assert.ok(Math.abs(point.y - 595.3333333333334) < 0.001)
   assert.equal(point.visible, true)
+})
+
+test('maps landmarks inside a centered mobile camera frame', () => {
+  const video = {
+    videoWidth: 1280,
+    videoHeight: 720,
+    getBoundingClientRect: () => ({
+      left: 10,
+      top: 175,
+      width: 370,
+      height: 494,
+    }),
+  }
+  const container = {
+    clientWidth: 390,
+    clientHeight: 844,
+    getBoundingClientRect: () => ({
+      left: 0,
+      top: 0,
+      width: 390,
+      height: 844,
+    }),
+  }
+
+  const center = mapLandmarkToCover({ x: 0.5, y: 0.5 }, video, container)
+  assert.equal(center.x, 195)
+  assert.equal(center.y, 422)
+  assert.equal(center.visible, true)
+
+  const croppedEdge = mapLandmarkToCover(
+    { x: 0.05, y: 0.5 },
+    video,
+    container,
+  )
+  assert.equal(croppedEdge.visible, false)
 })
